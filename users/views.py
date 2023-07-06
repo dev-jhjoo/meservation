@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from users.forms import LoginForm
+from users.forms import LoginForm, SignupForm
 from django.contrib.auth import authenticate, login
 
 def login_view(request):
@@ -27,3 +27,21 @@ def login_view(request):
             "form": form,
         }
         return render(request, 'users/login.html', context)
+
+def signup(request):
+    if request.method == "POST":
+        print("hahaha")
+        form = SignupForm(data=request.POST)
+        
+        if form.is_valid():
+            print(form)
+            user = form.save()
+            login(request, user)
+            return redirect("/users/login")
+    else:
+        form = SignupForm()
+
+    context = {
+        "form": form,
+    }
+    return render(request, 'users/signup.html', context)
