@@ -1,0 +1,54 @@
+name: Docker Image CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    # get commit hash id
+    - id: commit
+      uses: pr-mpt/actions-commit-hash@v2
+      with:
+        prefix: "commit-"
+
+    - name: Build the Docker image
+      run: docker build -t ${{ secrets.DOCKERHUB_ID }}/meservation:${{ steps.commit.outputs.short }} .
+
+    - name: Docker image latest tagging
+      run: docker tag ${{ secrets.DOCKERHUB_ID }}/meservation:${{ steps.commit.outputs.short }} ${{ secrets.DOCKERHUB_ID }}/meservation:latest
+      
+    - name: Docker-hub login 
+      uses: docker/login-action@v2
+      with: 
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+    - name: Docker-hub push w/ commit tag
+      run: docker push ${{ secrets.DOCKERHUB_ID }}/py-study-instagram:${{ steps.commit.outputs.short }}
+
+    - name: Docker-hub push w/ latest tag
+      run: docker push ${{ secrets.DOCKERHUB_ID }}/py-study-instagram:latest
+      
+    - name: SSH remote command
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        password: ${{ secrets.EC2_PASSWORD }}
+        port: ${{ secrets.EC2_PORT }}
+        script: |
+          export DB_NAME=${{ secrets.DB_NAME }}
+          export DB_USER=${{ secrets.DB_USER }}
+          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          export DB_HOST=${{ secrets.DB_HOST }}
+          export DB_PORT=${{ secrets.DB_PORT }}
+          
+          sudo docker stop meservation
+          sudo docker rm meservation
+          sudo docker pull ${{ secrets.DOCKERHUB_ID }}/meservation:${{ steps.commit.outputs.short }}
+          sudo docker run --name meservation -p 8000:8000 -d ${{ secrets.DOCKERHUB_ID }}/meservation:latest
