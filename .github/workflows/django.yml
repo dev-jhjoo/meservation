@@ -41,14 +41,14 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         password: ${{ secrets.EC2_PASSWORD }}
         port: ${{ secrets.EC2_PORT }}
-        script: |
-          export DB_NAME=${{ secrets.DB_NAME }}
-          export DB_USER=${{ secrets.DB_USER }}
-          export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          export DB_HOST=${{ secrets.DB_HOST }}
-          export DB_PORT=${{ secrets.DB_PORT }}
-          
+        script: |          
           sudo docker stop meservation
           sudo docker rm meservation
           sudo docker pull ${{ secrets.DOCKERHUB_ID }}/meservation:${{ steps.commit.outputs.short }}
-          sudo docker run --name meservation -p 8000:8000 -d ${{ secrets.DOCKERHUB_ID }}/meservation:latest
+          sudo docker run \
+            -e "DB_NAME=${{ secrets.DB_NAME }}" \
+            -e "DB_USER=${{ secrets.DB_USER }}" \
+            -e "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+            -e "DB_HOST=${{ secrets.DB_HOST }}" \
+            -e "DB_PORT=${{ secrets.DB_PORT }}" \
+            --name meservation -p 8000:8000 -d ${{ secrets.DOCKERHUB_ID }}/meservation:latest
