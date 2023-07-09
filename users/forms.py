@@ -3,7 +3,7 @@ from users.models import User
 from django.core.exceptions import ValidationError
 
 class LoginForm(forms.Form):
-    username = forms.CharField(
+    nickname = forms.CharField(
         min_length=3,
         max_length=16,
         widget=forms.TextInput(
@@ -18,7 +18,7 @@ class LoginForm(forms.Form):
     )
 
 class SignupForm(forms.Form):
-    username = forms.CharField(
+    nickname = forms.CharField(
         min_length=3,
         max_length=16,
         widget=forms.TextInput(
@@ -61,14 +61,14 @@ class SignupForm(forms.Form):
         )
     )
 
-    def clean_username(self):
-        username = self.cleaned_data["username"]
+    def clean_nickname(self):
+        nickname = self.cleaned_data["nickname"]
         # email = self.cleaned_data["email"].
-        if User.objects.filter(username=username).exists():
-            raise ValidationError(f"입력한 사용자명({username})은 이미 사용 중입니다.")
+        if User.objects.filter(nickname=nickname).exists():
+            raise ValidationError(f"입력한 사용자명({nickname})은 이미 사용 중입니다.")
         # if User.objects.filter(email=email).exists():
         #     raise forms.ValidationError("이미 사용중인 이메일입니다.")
-        return username
+        return nickname
     
     def clean(self):
         password = self.cleaned_data["password"]
@@ -77,14 +77,14 @@ class SignupForm(forms.Form):
             self.add_error("password2", "비밀번호와 비밀번호 확인란의 값이 다릅니다.")
         
     def save(self):
-        username = self.cleaned_data["username"]
+        nickname = self.cleaned_data["nickname"]
         password = self.cleaned_data["password"]
         email = self.cleaned_data["email"]
         first_name = self.cleaned_data["first_name"]
         last_name = self.cleaned_data["last_name"]
         description = self.cleaned_data["description"]
         user = User.objects.create_user(
-            username=username,
+            nickname=nickname,
             password=password,
             email=email,
             first_name=first_name,

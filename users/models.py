@@ -9,16 +9,16 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     # 유저 생성
-    def create_user(self, username, email, password=None):
+    def create_user(self, nickname, email, password=None):
         if not email:
             raise ValueError("email은 필수입니다.")
-        if not username:
-            raise ValueError("username은 필수입니다.")
+        if not nickname:
+            raise ValueError("nickname은 필수입니다.")
         if not password:
             raise ValueError("password는 필수입니다.")
 
         user = self.model(
-            username=username,
+            nickname=nickname,
             email=self.normalize_email(email),
         )
 
@@ -29,9 +29,9 @@ class UserManager(BaseUserManager):
         return user
 
     # 슈퍼유저 생성
-    def create_superuser(self, username, email, password):
+    def create_superuser(self, nickname, email, password):
         user = self.create_user(
-            username=username,
+            nickname=nickname,
             email=self.normalize_email(email),
             password=password,
         )
@@ -42,12 +42,12 @@ class UserManager(BaseUserManager):
         return user
 
 class User(AbstractBaseUser, PermissionsMixin):
-    username_validator = UnicodeUsernameValidator()
+    nickname_validator = UnicodeUsernameValidator()
 
     id = models.AutoField(_("id"), primary_key=True)
 
     uuid = models.UUIDField(_("UUID"), default=uuid.uuid4, editable=False, unique=True)
-    username = models.CharField(_("username"), max_length=50, validators=[username_validator], unique=True)
+    nickname = models.CharField(_("nickname"), max_length=50, validators=[nickname_validator], unique=True)
     
     first_name = models.CharField(_("first name"), max_length=50, blank=True)
     last_name = models.CharField(_("last name"), max_length=50, blank=True)
@@ -63,16 +63,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     deleted_at = models.BooleanField(_("deleted at"), default=False)
 
     objects = UserManager()
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = "nickname"
     REQUIRED_FIELDS = ["email"]
 
-    # 관리자 페이지에 표시될 이름
     class Meta:
-        verbose_name = _("user")
-        verbose_name_plural = _("users")
+        # db 테이블명 지정
+        db_table = "users"
 
-    # 이메일 정규화 로직
+    
     def clean(self):
         super().clean()
+        # 이메일 정규화 로직
         self.__class__.objects.normalize_email(self.email)
 

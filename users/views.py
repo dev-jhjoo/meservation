@@ -6,10 +6,10 @@ def login_view(request):
     if request.method == "POST":
         form = LoginForm(data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get("username")
+            nickname = form.cleaned_data.get("nickname")
             password = form.cleaned_data.get("password")
 
-            user = authenticate(request, username=username, password=password)
+            user = authenticate(request, nickname=nickname, password=password)
             if user:
                 login(request, user)
                 # 추후 메인 페이지로 경로 수정 필요
