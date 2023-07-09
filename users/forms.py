@@ -3,13 +3,12 @@ from users.models import User
 from django.core.exceptions import ValidationError
 
 class LoginForm(forms.Form):
-    nickname = forms.CharField(
-        min_length=3,
-        max_length=16,
-        widget=forms.TextInput(
-            attrs={"placeholder": "사용자 이름을 입력하세요."},
+    email = forms.EmailField(
+        widget=forms.EmailInput(
+            attrs={"placeholder": "이메일을 입력하세요."},
         )
     )
+
     password = forms.CharField(
         min_length=4,
         widget=forms.PasswordInput(
@@ -63,12 +62,15 @@ class SignupForm(forms.Form):
 
     def clean_nickname(self):
         nickname = self.cleaned_data["nickname"]
-        # email = self.cleaned_data["email"].
         if User.objects.filter(nickname=nickname).exists():
             raise ValidationError(f"입력한 사용자명({nickname})은 이미 사용 중입니다.")
-        # if User.objects.filter(email=email).exists():
-        #     raise forms.ValidationError("이미 사용중인 이메일입니다.")
         return nickname
+    
+    def clean_email(self):
+        email = self.cleaned_data["email"]
+        if User.objects.filter(email=email).exists():
+            raise ValidationError(f"입력한 이메일({email})은 이미 사용 중입니다.")
+        return email
     
     def clean(self):
         password = self.cleaned_data["password"]

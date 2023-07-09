@@ -34,7 +34,6 @@ def signup(request):
         form = SignupForm(data=request.POST)
         
         if form.is_valid():
-            print(form)
             user = form.save()
             login(request, user)
             return redirect("/users/login")

@@ -9,7 +9,7 @@ class UserManager(BaseUserManager):
     use_in_migrations = True
 
     # 유저 생성
-    def create_user(self, nickname, email, password=None):
+    def create_user(self, nickname, email, password, first_name=None, last_name=None, description=None):
         if not email:
             raise ValueError("email은 필수입니다.")
         if not nickname:
@@ -20,6 +20,9 @@ class UserManager(BaseUserManager):
         user = self.model(
             nickname=nickname,
             email=self.normalize_email(email),
+            first_name=first_name,
+            last_name=last_name,
+            description=description,
         )
 
         user.is_staff = False
