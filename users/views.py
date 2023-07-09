@@ -1,6 +1,10 @@
 from django.shortcuts import render, redirect
 from users.forms import LoginForm, SignupForm
 from django.contrib.auth import authenticate, login
+from rest_framework import viewsets
+from users.models import User
+from users.serializers import UserSerializer
+
 
 def login_view(request):
     if request.method == "POST":
@@ -44,3 +48,7 @@ def signup_view(request):
         "form": form,
     }
     return render(request, 'users/signup.html', context)
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
