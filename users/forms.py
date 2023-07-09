@@ -76,7 +76,7 @@ class SignupForm(forms.Form):
         password = self.cleaned_data["password"]
         password_check = self.cleaned_data["password_check"]
         if password != password_check:
-            self.add_error("password2", "비밀번호와 비밀번호 확인란의 값이 다릅니다.")
+            self.add_error("password_check", "비밀번호와 비밀번호 확인란의 값이 다릅니다.")
         
     def save(self):
         nickname = self.cleaned_data["nickname"]

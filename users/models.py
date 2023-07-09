@@ -66,8 +66,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     deleted_at = models.BooleanField(_("deleted at"), default=False)
 
     objects = UserManager()
-    USERNAME_FIELD = "nickname"
-    REQUIRED_FIELDS = ["email"]
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["nickname"]
 
     class Meta:
         # db 테이블명 지정
