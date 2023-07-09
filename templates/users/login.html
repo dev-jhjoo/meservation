@@ -5,6 +5,9 @@
         <h1>Login</h1>
         {% csrf_token %}
         {{ form.as_p }}
+        <a href="{% url 'users:signup' %}" class="login-button">회원가입</a>
+        <div>
         <button type="submit">Login</button>
+        </div>
     </form>
 {% endblock %}
