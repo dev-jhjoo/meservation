@@ -1,8 +1,13 @@
 from django.shortcuts import render, redirect
-from users.forms import LoginForm, SignupForm
 from django.contrib.auth import authenticate, login
-from rest_framework import viewsets
+
 from users.models import User
+from users.forms import LoginForm, SignupForm
+
+from rest_framework import viewsets
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from users.serializers import UserSerializer
 
 
@@ -49,6 +54,20 @@ def signup_view(request):
     }
     return render(request, 'users/signup.html', context)
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+class UsersInfo(APIView):
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+class UserInfo(APIView):
+    def get_object(self, uuid):
+        try:
+            return User.objects.get(uuid=uuid)
+        except User.DoesNotExist:
+            raise status.HTTP_400_BAD_REQUEST
+
+    def get(self, request, uuid):
+        user = self.get_object(uuid)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
