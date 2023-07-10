@@ -24,4 +24,6 @@ urlpatterns = [
     path('main/', main),
     path('health/', health_check),
     path('users/', include('users.urls')),
+    
+    path('v1/api/users/', include('users.urls', namespace='api_users')),
 ]
