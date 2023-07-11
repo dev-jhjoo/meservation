@@ -44,7 +44,7 @@ jobs:
         script: |          
           sudo docker stop meservation
           sudo docker rm meservation
-          sudo docker pull ${{ secrets.DOCKERHUB_ID }}/meservation:${{ steps.commit.outputs.short }}
+          sudo docker pull ${{ secrets.DOCKERHUB_ID }}/meservation:latest
           sudo docker run \
             --network=dbnetwork \
             -e "DB_NAME=${{ secrets.DB_NAME }}" \
