@@ -12,11 +12,11 @@ class UserChangeForm(UserChangeForm):
 class UserCreateForm(UserCreationForm):
     class Meta:
         model = User
-        fields = ('username', 'email')
+        fields = ('nickname', 'email')
 
 class UserAdmin(UserAdmin):
     fieldsets = (
-        (None, {'fields': ('username', 'uuid', 'password', 'email')}),
+        (None, {'fields': ('nickname', 'uuid', 'password', 'email')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name', 'description')}),
         (_('Permissions'), {'fields': ('is_staff', 'is_superuser')}),
         (_('Important dates'), {'fields': ('create_at', 'update_at')}),
@@ -24,17 +24,17 @@ class UserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('username', 'email', 'password1', 'password2'),
+            'fields': ('nickname', 'email', 'password1', 'password2'),
         }),
     )
     readonly_fields = ('create_at','update_at','uuid')
 
     form = UserChangeForm
     add_form = UserCreateForm
-    list_display = ('username', 'email', 'is_staff', 'is_superuser')
+    list_display = ('nickname', 'email', 'is_staff', 'is_superuser')
     list_filter = ('is_staff', 'is_superuser')
-    search_fields = ('username', 'email')
-    ordering = ('username',)
+    search_fields = ('nickname', 'email')
+    ordering = ('nickname',)
 
 admin.site.register(User, UserAdmin)
     
