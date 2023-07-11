@@ -64,7 +64,6 @@ class UsersInfo(APIView):
 class UserInfo(APIView):
     def get_object(self, uuid):
         try:
-            print("get object: ", User.objects.get(uuid=uuid))
             return User.objects.get(uuid=uuid)
         except User.DoesNotExist:
             raise status.HTTP_400_BAD_REQUEST

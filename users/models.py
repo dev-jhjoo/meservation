@@ -32,11 +32,14 @@ class UserManager(BaseUserManager):
         return user
 
     # 슈퍼유저 생성
-    def create_superuser(self, nickname, email, password):
+    def create_superuser(self, nickname, email, password, first_name='', last_name='', description=''):
         user = self.create_user(
             nickname=nickname,
             email=self.normalize_email(email),
             password=password,
+            first_name=first_name,
+            last_name=last_name,
+            description=description,
         )
         user.is_staff = True
         user.is_superuser = True
