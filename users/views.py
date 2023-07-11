@@ -8,7 +8,7 @@ from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from users.serializers import UserSerializer
+from users.serializers import UserSerializer, UserSignupSerializer
 
 
 def login_view(request):
@@ -54,6 +54,7 @@ def signup_view(request):
     }
     return render(request, 'users/signup.html', context)
 
+
 class UsersInfo(APIView):
     def get(self, request):
         users = User.objects.all()
@@ -63,6 +64,7 @@ class UsersInfo(APIView):
 class UserInfo(APIView):
     def get_object(self, uuid):
         try:
+            print("get object: ", User.objects.get(uuid=uuid))
             return User.objects.get(uuid=uuid)
         except User.DoesNotExist:
             raise status.HTTP_400_BAD_REQUEST
@@ -71,3 +73,19 @@ class UserInfo(APIView):
         user = self.get_object(uuid)
         serializer = UserSerializer(user)
         return Response(serializer.data)
+
+    def post(self, request, uuid):
+        user = self.get_object(uuid)
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UserSignup(APIView):
+    def post(self, request):
+        serializer = UserSignupSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
