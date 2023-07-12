@@ -88,3 +88,18 @@ class UserSignup(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# class UserLogin(APIView):
+#     def post(self, request, format=None):
+#         email = request.data.get("email")
+#         password = request.data.get("password")
+#         user = authenticate(request, email=email, password=password)
+#         if user is not None:
+#             try:
+#                 payload = api_settings.JWT_PAYLOAD_HANDLER(user)
+#                 token = api_settings.JWT_ENCODE_HANDLER(payload)
+#                 return Response({"token": token}, status=status.HTTP_200_OK)
+#             except Exception as e:
+#                 return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#         else:
+#             return Response(status=status.HTTP_401_UNAUTHORIZED)
