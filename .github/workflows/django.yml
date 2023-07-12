@@ -52,4 +52,4 @@ jobs:
             -e "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
             -e "DB_HOST=${{ secrets.DB_HOST }}" \
             -e "DB_PORT=${{ secrets.DB_PORT }}" \
-            --name meservation -p 8000:8000 -d ${{ secrets.DOCKERHUB_ID }}/meservation:latest
+            --name meservation -p 8000:8000 -d ${{ secrets.DOCKERHUB_ID }}/meservation:${{ steps.commit.outputs.short }}
