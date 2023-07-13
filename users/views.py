@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from users.serializers import UserSerializer, UserSignupSerializer
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 def login_view(request):
     if request.method == "POST":
@@ -63,15 +65,15 @@ class UsersInfo(APIView):
 
 class UserInfo(APIView):
     def get_object(self, uuid):
-        try:
-            return User.objects.get(uuid=uuid)
-        except User.DoesNotExist:
-            raise status.HTTP_400_BAD_REQUEST
+        return User.objects.get(uuid=uuid)
 
     def get(self, request, uuid):
-        user = self.get_object(uuid)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
+        try:
+            user = self.get_object(uuid)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response({"statusMessage": "잘못된 요청", "statusCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, uuid):
         user = self.get_object(uuid)
@@ -89,17 +91,19 @@ class UserSignup(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# class UserLogin(APIView):
-#     def post(self, request, format=None):
-#         email = request.data.get("email")
-#         password = request.data.get("password")
-#         user = authenticate(request, email=email, password=password)
-#         if user is not None:
-#             try:
-#                 payload = api_settings.JWT_PAYLOAD_HANDLER(user)
-#                 token = api_settings.JWT_ENCODE_HANDLER(payload)
-#                 return Response({"token": token}, status=status.HTTP_200_OK)
-#             except Exception as e:
-#                 return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#         else:
-#             return Response(status=status.HTTP_401_UNAUTHORIZED)
+class UserLogin(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            try:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                }, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
