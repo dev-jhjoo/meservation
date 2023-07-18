@@ -4,13 +4,15 @@ from django.contrib.auth import authenticate, login
 from users.models import User
 from users.forms import LoginForm, SignupForm
 
-from rest_framework import viewsets
+# from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from users.serializers import UserSerializer, UserSignupSerializer
 
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
 
 
 def login_view(request):
@@ -57,26 +59,25 @@ def signup_view(request):
     return render(request, 'users/signup.html', context)
 
 
-class UsersInfo(APIView):
-    def get(self, request):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def users_info(request):
+    users = User.objects.all()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)
 
-class UserInfo(APIView):
-    def get_object(self, uuid):
-        return User.objects.get(uuid=uuid)
-
-    def get(self, request, uuid):
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def user_info(request, uuid):
+    if request.method == "GET":
         try:
-            user = self.get_object(uuid)
+            user = User.objects.get(uuid=uuid)
             serializer = UserSerializer(user)
             return Response(serializer.data)
         except User.DoesNotExist:
             return Response({"statusMessage": "잘못된 요청", "statusCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
-
-    def post(self, request, uuid):
-        user = self.get_object(uuid)
+    elif request.method == "POST":
+        user = User.objects.get(uuid=uuid)
         serializer = UserSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -91,19 +92,20 @@ class UserSignup(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UserLogin(APIView):
-    def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
-        user = authenticate(request, email=email, password=password)
-        if user is not None:
-            try:
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    "refresh": str(refresh),
-                    "access": str(refresh.access_token),
-                }, status=status.HTTP_200_OK)
-            except Exception as e:
-                return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def user_login(request):
+    email = request.data.get("email")
+    password = request.data.get("password")
+    user = authenticate(request, email=email, password=password)
+    if user is not None:
+        try:
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+            }, 
+            status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    else:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
