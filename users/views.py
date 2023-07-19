@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 
 from users.models import User
@@ -8,7 +8,7 @@ from users.forms import LoginForm, SignupForm
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from users.serializers import UserSerializer, UserSignupSerializer
+from users.serializers import UserSerializer, UserSignupSerializer, UserFriendshipSerializer
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
@@ -109,3 +109,41 @@ def user_login(request):
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
         return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_following(request, uuid):
+    try:
+        user = User.objects.get(uuid=uuid)
+        following = user.following_user_id.all()
+        serializer = UserFriendshipSerializer(following, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({"statusMessage": "잘못된 요청", "statusCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_followers(request, uuid):
+    try:
+        user = User.objects.get(uuid=uuid)
+        follower = user.followed_user_id.all()
+        serializer = UserFriendshipSerializer(follower, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({"statusMessage": "잘못된 요청", "statusCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def user_follow(request, uuid):
+    try:
+        user = User.objects.get(uuid=uuid)
+        target_user = request.user
+
+        if target_user in user.following.all():
+            user.following.remove(target_user)
+            return Response({"statusMessage": "팔로우 취소", "statusCode": "200"}, status=status.HTTP_200_OK)
+        else :
+            user.following.add(target_user)
+        return Response({"statusMessage": "팔로우 성공", "statusCode": "200"}, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return Response({"statusMessage": "잘못된 요청", "statusCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
