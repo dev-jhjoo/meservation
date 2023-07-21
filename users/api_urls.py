@@ -1,5 +1,5 @@
 from django.urls import path
-from users.views import UserSignup, users_info, user_info, user_login, user_following, user_followers, user_follow
+from users.views import UserSignup, users_info, user_info, user_login, user_following, user_followers, user_follow, user_unfollow
 
 app_name = "users"
 
@@ -9,7 +9,8 @@ urlpatterns = [
     path('signup/', UserSignup.as_view(), name="api-signup"),
     path('login/', user_login, name='api-login'),
 
-    path('following/<uuid:uuid>/', user_following, name='api-following'),
-    path('followers/<uuid:uuid>/', user_followers, name='api-following'),
-    path('follow/<uuid:uuid>/', user_follow, name='api-follow'),
+    path('following/', user_following, name='api-following'),
+    path('followers/', user_followers, name='api-following'),
+    path('follow/', user_follow, name='api-follow'),
+    path('unfollow/', user_unfollow, name='api-unfollow'),
 ]
