@@ -61,6 +61,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     following = models.ManyToManyField("self", verbose_name="팔로우 중인 사용자들", related_name="followers", symmetrical=False, through="users.friendship", blank=True)
     description = models.TextField(_("description"), max_length=50, blank=True)
 
+    status_message = models.CharField(_("status message"), max_length=50, blank=True)
+    profile_image = models.ImageField(_("profile image"), upload_to="profile_image", blank=True)
+
     is_staff = models.BooleanField(_("staff status"), default=False)
 
     create_at = models.DateTimeField(_("create_at"), auto_now_add=True)
