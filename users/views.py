@@ -43,7 +43,6 @@ def login_view(request):
 
 def signup_view(request):
     if request.method == "POST":
-        print("hahaha")
         form = SignupForm(data=request.POST)
         
         if form.is_valid():
@@ -59,38 +58,94 @@ def signup_view(request):
     return render(request, 'users/signup.html', context)
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def users_info(request):
-    users = User.objects.all()
-    serializer = UserSerializer(users, many=True)
-    return Response(serializer.data)
+def create_response(code, message, data, status=status.HTTP_200_OK):
+    return Response({
+        "code": code,
+        "message": message,
+        "data": data
+    }, status=status)
+
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
-def user_info(request, uuid):
-    if request.method == "GET":
-        try:
-            user = User.objects.get(uuid=uuid)
-            serializer = UserSerializer(user)
-            return Response(serializer.data)
-        except User.DoesNotExist:
-            return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == "POST":
-        user = User.objects.get(uuid=uuid)
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+def user_info(request):
+    if request.method == 'GET':
+        return get_user_info(request)
+    elif request.method == 'POST':
+        return update_user_info(request)
     
-class UserSignup(APIView):
-    def post(self, request):
-        serializer = UserSignupSerializer(data=request.data)
+def get_user_info(request):
+    uuid = request.data.get("uuid")
+    if not uuid:
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        data = {
+            "count": len(serializer.data),
+            "users": serializer.data
+        }
+
+        return create_response(2000, "Success", data)
+
+    try:
+        user = User.objects.get(uuid=uuid)
+        serializer = UserSerializer(user)
+        data = {
+            "count": len(serializer.data),
+            "user": serializer.data
+        }
+
+        return create_response(2000, "Success", data)
+    except User.DoesNotExist:
+        data = {
+            "count": 0,
+            "users": []
+        }
+
+        return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
+
+def update_user_info(request):
+    uuid = request.data.get("uuid")
+    try:
+        user = User.objects.get(uuid=uuid)
+        serializer = UserSerializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                "count": len(serializer.data),
+                "user": serializer.data
+            }
+            return create_response(2000, "Success", data)
+        
+        if serializer.error_messages:
+            messages = {}
+            for field, error in serializer.errors.items():
+                messages[field] = error[0]
+
+            return create_response(4001, messages, {}, status=status.HTTP_400_BAD_REQUEST)
+    except User.DoesNotExist:
+        data = {
+            "count": 0,
+            "user": []
+        }
+        return create_response(2001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
+    
+@api_view(['POST'])
+def user_signup(request):
+    serializer = UserSignupSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+
+        response_data = {
+                "code": 2000,
+                "message": "Success",
+                "data": {
+                    "count": len(serializer.data),
+                    "userList": serializer.data
+                }
+            }
+
+        return Response(response_data, status=status.HTTP_200_OK)
+    return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def user_login(request):
@@ -138,7 +193,6 @@ def user_followers(request):
     try:
         user = User.objects.get(uuid=uuid)
         follower = user.followed_user_id.all()
-        print(follower)
         serializer = UserFriendshipSerializer(follower, many=True)
 
         response_data = {
