@@ -32,4 +32,4 @@ class UserSignupSerializer(serializers.ModelSerializer):
 class UserFriendshipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friendship
-        fields = ('following_user_id', 'followed_user_id')
+        fields = ('following_user_uuid', 'followed_user_uuid')

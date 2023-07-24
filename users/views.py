@@ -90,7 +90,6 @@ def get_user_info(request):
         user = User.objects.get(uuid=uuid)
         serializer = UserSerializer(user)
         data = {
-            "count": len(serializer.data),
             "user": serializer.data
         }
 
@@ -139,8 +138,7 @@ def user_signup(request):
                 "code": 2000,
                 "message": "Success",
                 "data": {
-                    "count": len(serializer.data),
-                    "userList": serializer.data
+                    "user": serializer.data
                 }
             }
 

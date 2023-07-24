@@ -90,8 +90,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Friendship(models.Model):
     id = models.AutoField(_("id"), primary_key=True)
 
-    following_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="following_user_id", to_field="uuid")
-    followed_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="followed_user_id", to_field="uuid")
+    following_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="following_user_uuid", to_field="uuid", db_column="following_user_uuid")
+    followed_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="followed_user_uuid", to_field="uuid",db_column="followed_user_uuid")
 
     create_at = models.DateTimeField(_("create_at"), auto_now_add=True)
 
