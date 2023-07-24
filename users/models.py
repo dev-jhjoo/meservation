@@ -58,7 +58,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(_("first name"), max_length=50, blank=True)
     last_name = models.CharField(_("last name"), max_length=50, blank=True)
     email = models.EmailField(_("email address"), unique=True)
+    following = models.ManyToManyField("self", verbose_name="팔로우 중인 사용자들", related_name="followers", symmetrical=False, through="users.friendship", blank=True)
     description = models.TextField(_("description"), max_length=50, blank=True)
+
+    status_message = models.CharField(_("status message"), max_length=50, blank=True)
+    profile_image = models.ImageField(_("profile image"), upload_to="profile_image", blank=True)
 
     is_staff = models.BooleanField(_("staff status"), default=False)
 
@@ -82,3 +86,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         # 이메일 정규화 로직
         self.__class__.objects.normalize_email(self.email)
 
+
+class Friendship(models.Model):
+    id = models.AutoField(_("id"), primary_key=True)
+
+    following_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="following_user_uuid", to_field="uuid", db_column="following_user_uuid")
+    followed_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="followed_user_uuid", to_field="uuid", db_column="followed_user_uuid")
+
+    create_at = models.DateTimeField(_("create_at"), auto_now_add=True)
+
+    class Meta:
+        # db 테이블명 지정
+        db_table = "friendship"
+
+    def __str__(self):
+        return f"{self.following_user} follows {self.followed_user}"
