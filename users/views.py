@@ -134,15 +134,11 @@ def user_signup(request):
     if serializer.is_valid():
         serializer.save()
 
-        response_data = {
-                "code": 2000,
-                "message": "Success",
-                "data": {
-                    "user": serializer.data
-                }
+        data = {
+                "user": serializer.data
             }
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        return create_response(2000, "Success", data)
     
     if serializer.error_messages:
             messages = {}
@@ -160,36 +156,19 @@ def user_login(request):
     if user is not None:
         try:
             refresh = RefreshToken.for_user(user)
-            return Response({
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-            }, 
-            status=status.HTTP_200_OK)
+
+            data = {
+                    "refresh": str(refresh),
+                    "access": str(refresh.access_token),
+                    "user": UserSerializer(user).data
+                }
+
+            return create_response(2000, "Success", data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     else:
-        return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_following(request):
-    uuid = request.data.get("uuid")
-    try:
-        user = User.objects.get(uuid=uuid)
-        following = user.following_user_id.all()
-        serializer = UserFriendshipSerializer(following, many=True)
-
-        response_data = {
-            "resultCode": 200,
-            "resultMessage": {
-                "count": len(serializer.data),
-                "friendList": serializer.data
-            }
-        }
-
-        return Response(response_data, status=status.HTTP_200_OK)
-    except User.DoesNotExist:
-        return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+        data = {}
+        return create_response(4002, "이메일 또는 비밀번호를 잘못 입력했습니다. 입력하신 내용을 다시 확인해주세요.", data, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -197,20 +176,46 @@ def user_followers(request):
     uuid = request.data.get("uuid")
     try:
         user = User.objects.get(uuid=uuid)
-        follower = user.followed_user_id.all()
-        serializer = UserFriendshipSerializer(follower, many=True)
+        following = user.following_user_uuid.all()
+        serializer = UserFriendshipSerializer(following, many=True)
 
-        response_data = {
-            "resultCode": 200,
-            "resultMessage": {
-                "count": len(serializer.data),
-                "friendList": serializer.data
-            }
+        data = {
+            "count": len(serializer.data),
+            "friendList": serializer.data
         }
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        return create_response(2000, "Success", data)
+
     except User.DoesNotExist:
-        return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            "count": 0,
+            "friendList": []
+        }
+
+        return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_following(request):
+    uuid = request.data.get("uuid")
+    try:
+        user = User.objects.get(uuid=uuid)
+        follower = user.followed_user_uuid.all()
+        serializer = UserFriendshipSerializer(follower, many=True)
+
+        data = {
+            "count": len(serializer.data),
+            "friendList": serializer.data
+        }
+
+        return create_response(2000, "Success", data)
+    except User.DoesNotExist:
+        data = {
+            "count": 0,
+            "friendList": []
+        }
+
+        return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -220,14 +225,31 @@ def user_follow(request):
         user = User.objects.get(uuid=uuid)
         target_user = request.user
         if user == target_user:
-            return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                "count": 0,
+            }
+
+            return create_response(4001, "자기 자신을 팔로우할 수 없습니다.", data, status=status.HTTP_400_BAD_REQUEST)
         elif user.following.filter(uuid=target_user.uuid).exists():
-            return Response({"statusMessage": "이미 팔로우 중인 사용자입니다.", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                "count": 0,
+            }
+
+            return create_response(4001, "이미 팔로우 중인 사용자입니다.", data, status=status.HTTP_400_BAD_REQUEST)
         else:
             user.following.add(target_user)
-        return Response({"statusMessage": "팔로우 성공", "resultCode": "200"}, status=status.HTTP_200_OK)
+
+            data = {
+                "count": 1,
+                "followingList": UserFriendshipSerializer(user.following_user_uuid.all(), many=True).data
+            }
+            return create_response(2000, "Success", data)
     except User.DoesNotExist:
-        return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            "count": 0,
+        }
+
+        return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -237,11 +259,30 @@ def user_unfollow(request):
         user = User.objects.get(uuid=uuid)
         target_user = request.user
         if user == target_user:
-            return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                "count": 0,
+            }
+
+            return create_response(4001, "자기 자신을 언팔로우할 수 없습니다.", data, status=status.HTTP_400_BAD_REQUEST)
         elif not user.following.filter(uuid=target_user.uuid).exists():
-            return Response({"statusMessage": "팔로우 중인 사용자가 아닙니다.", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+            data = {
+                "count": 0,
+            }
+
+            return create_response(4001, "팔로우 중인 사용자가 아닙니다.", data, status=status.HTTP_400_BAD_REQUEST)
         else:
+            data = {
+                "count": 1,
+                "unfollowingList": UserFriendshipSerializer(user.following_user_uuid.all(), many=True).data
+            }
+
             user.following.remove(target_user)
-        return Response({"statusMessage": "언팔로우 성공", "resultCode": "200"}, status=status.HTTP_200_OK)
+            return create_response(2000, "Success", data)
+
     except User.DoesNotExist:
-        return Response({"statusMessage": "잘못된 요청", "resultCode": "400"}, status=status.HTTP_400_BAD_REQUEST)
+        data = {
+            "count": 0,
+        }
+
+        return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
+
