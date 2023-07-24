@@ -143,6 +143,13 @@ def user_signup(request):
             }
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+    if serializer.error_messages:
+            messages = {}
+            for field, error in serializer.errors.items():
+                messages[field] = error[0]
+
+            return create_response(4001, messages, {}, status=status.HTTP_400_BAD_REQUEST)
     return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
