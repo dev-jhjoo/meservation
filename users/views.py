@@ -4,7 +4,6 @@ from django.contrib.auth import authenticate, login
 from users.models import User, Friendship
 from users.forms import LoginForm, SignupForm
 
-# from rest_framework import viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -77,7 +76,7 @@ def user_info(request):
 def get_user_info(request):
     uuid = request.data.get("uuid")
     if not uuid:
-        users = User.objects.filter(deleted_at=False).all()
+        users = User.objects.filter(is_deleted=False).all()
         serializer = UserSerializer(users, many=True)
         data = {
             "count": len(serializer.data),
@@ -87,7 +86,7 @@ def get_user_info(request):
         return create_response(2000, "Success", data)
 
     try:
-        user = User.objects.get(uuid=uuid, deleted_at=False)
+        user = User.objects.get(uuid=uuid, is_deleted=False)
         serializer = UserSerializer(user)
         data = {
             "user": serializer.data
@@ -105,7 +104,7 @@ def get_user_info(request):
 def update_user_info(request):
     uuid = request.data.get("uuid")
     try:
-        user = User.objects.get(uuid=uuid, deleted_at=False)
+        user = User.objects.get(uuid=uuid, is_deleted=False)
         serializer = UserSerializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -160,18 +159,18 @@ def user_withdraw(request):
     try:
         user = User.objects.get(uuid=uuid)
 
-        if user.deleted_at:
+        if user.is_deleted:
             data = {}
-            return create_response(4001, "이미 탈퇴한 유저입니다.", data, status=status.HTTP_400_BAD_REQUEST)
+            return create_response(4003, "이미 탈퇴한 유저입니다.", data, status=status.HTTP_400_BAD_REQUEST)
         
-        Friendship.objects.filter(following_user=user).update(is_inactive=True)
-        Friendship.objects.filter(followed_user=user).update(is_inactive=True)
+        Friendship.objects.filter(following_user=user).update(is_deleted=True)
+        Friendship.objects.filter(followed_user=user).update(is_deleted=True)
 
-        user.deleted_at = True
+        user.is_deleted = True
         user.save()
 
         data = {
-            "count": len(UserSerializer(user).data),
+            "count": 1,
             "user": UserSerializer(user).data
         }
         return create_response(2000, "Success", data)
@@ -185,7 +184,7 @@ def user_login(request):
     email = request.data.get("email")
     password = request.data.get("password")
     
-    is_deleted_user = User.objects.filter(email=email, deleted_at=True).exists()
+    is_deleted_user = User.objects.filter(email=email, is_deleted=True).exists()
     if is_deleted_user:
         data = {}
         return create_response(4003, "탈퇴한 유저입니다.", data, status=status.HTTP_400_BAD_REQUEST)
@@ -213,8 +212,8 @@ def user_login(request):
 def user_followers(request):
     uuid = request.data.get("uuid")
     try:
-        user = User.objects.get(uuid=uuid, deleted_at=False)
-        following = user.following_user_uuid.all().filter(is_inactive=False)
+        user = User.objects.get(uuid=uuid, is_deleted=False)
+        following = user.following_user_uuid.all().filter(is_deleted=False)
         serializer = UserFriendshipSerializer(following, many=True)
 
         data = {
@@ -237,8 +236,8 @@ def user_followers(request):
 def user_following(request):
     uuid = request.data.get("uuid")
     try:
-        user = User.objects.get(uuid=uuid, deleted_at=False)
-        follower = user.followed_user_uuid.all().filter(is_inactive=False)
+        user = User.objects.get(uuid=uuid, is_deleted=False)
+        follower = user.followed_user_uuid.all().filter(is_deleted=False)
         serializer = UserFriendshipSerializer(follower, many=True)
 
         data = {
@@ -260,7 +259,7 @@ def user_following(request):
 def user_follow(request):
     uuid = request.data.get("uuid")
     try:
-        user = User.objects.get(uuid=uuid, deleted_at=False)
+        user = User.objects.get(uuid=uuid, is_deleted=False)
         target_user = request.user
 
         if user == target_user:
@@ -295,7 +294,7 @@ def user_follow(request):
 def user_unfollow(request):
     uuid = request.data.get("uuid")
     try:
-        user = User.objects.get(uuid=uuid, deleted_at=False)
+        user = User.objects.get(uuid=uuid, is_deleted=False)
         target_user = request.user
         if user == target_user:
             data = {
