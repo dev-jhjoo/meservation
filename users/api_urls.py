@@ -1,12 +1,12 @@
 from django.urls import path
-from users.views import user_signup, user_info, user_login, user_following, user_followers, user_follow, user_unfollow
+from users.views import user_signup, user_info, user_login, user_following, user_followers, user_follow, user_unfollow, user_withdraw
 
 app_name = "users"
 
 urlpatterns = [
     path('info/', user_info, name="api-user-detail"),
     path('signup/', user_signup, name="api-signup"),
-    # paht('signout/', user_signout, name="api-signout"')
+    path('withdraw/', user_withdraw, name="api-withdraw"),
     path('login/', user_login, name='api-login'),
 
     path('following/', user_following, name='api-following'),

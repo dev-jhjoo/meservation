@@ -70,21 +70,23 @@ class User(AbstractBaseUser, PermissionsMixin):
     update_at = models.DateTimeField(_("update_at"), auto_now=True)
     last_login_at = models.DateTimeField(_("last login"), auto_now=True)
 
-    deleted_at = models.BooleanField(_("deleted at"), default=False)
+    is_deleted = models.BooleanField(_("is_deleted"), default=False)
 
     objects = UserManager()
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["nickname"]
 
     class Meta:
-        # db 테이블명 지정
         db_table = "users"
 
     
     def clean(self):
         super().clean()
-        # 이메일 정규화 로직
         self.__class__.objects.normalize_email(self.email)
+
+    def delete(self, using=None, keep_parents=False):
+        self.is_deleted = True
+        self.save()
 
 
 class Friendship(models.Model):
@@ -92,11 +94,11 @@ class Friendship(models.Model):
 
     following_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="following_user_uuid", to_field="uuid", db_column="following_user_uuid")
     followed_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="followed_user_uuid", to_field="uuid", db_column="followed_user_uuid")
+    is_deleted = models.BooleanField(default=False)
 
     create_at = models.DateTimeField(_("create_at"), auto_now_add=True)
 
     class Meta:
-        # db 테이블명 지정
         db_table = "friendship"
 
     def __str__(self):
