@@ -149,6 +149,35 @@ def user_signup(request):
     return Response(serializer.error, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def user_withdraw(request):
+    uuid = request.data.get("uuid")
+
+    if not uuid:
+        data = {}
+        return create_response(4001, "유저 uuid가 없습니다.", data, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        user = User.objects.get(uuid=uuid)
+
+        if user.deleted_at:
+            data = {}
+            return create_response(4001, "이미 탈퇴한 유저입니다.", data, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.deleted_at = True
+        user.save()
+
+        data = {
+            "count": len(UserSerializer(user).data),
+            "user": UserSerializer(user).data
+        }
+        return create_response(2000, "Success", data)
+    except User.DoesNotExist:
+        data = {}
+        return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
 def user_login(request):
     email = request.data.get("email")
     password = request.data.get("password")

@@ -86,6 +86,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         # 이메일 정규화 로직
         self.__class__.objects.normalize_email(self.email)
 
+    def delete(self, using=None, keep_parents=False):
+        self.deleted_at = True
+        self.save()
+
 
 class Friendship(models.Model):
     id = models.AutoField(_("id"), primary_key=True)
