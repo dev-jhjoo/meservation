@@ -96,6 +96,7 @@ class Friendship(models.Model):
 
     following_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="following_user_uuid", to_field="uuid", db_column="following_user_uuid")
     followed_user = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="followed_user_uuid", to_field="uuid", db_column="followed_user_uuid")
+    is_inactive = models.BooleanField(default=False)
 
     create_at = models.DateTimeField(_("create_at"), auto_now_add=True)
 
