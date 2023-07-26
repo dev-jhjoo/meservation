@@ -71,6 +71,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_login_at = models.DateTimeField(_("last login"), auto_now=True)
 
     is_deleted = models.BooleanField(_("is_deleted"), default=False)
+    delete_at = models.DateTimeField(_("delete_at"), null=True, blank=True)
 
     objects = UserManager()
     USERNAME_FIELD = "email"
