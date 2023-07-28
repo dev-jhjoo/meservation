@@ -1,10 +1,15 @@
 from rest_framework import serializers
-from users.models import User
+from users.models import User, Friendship
 
 class UserSerializer(serializers.ModelSerializer):
+    following = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
-        fields = ('id', 'uuid', 'email', 'nickname', 'first_name', 'last_name', 'description')
+        fields = ('id', 'uuid', 'email', 'nickname', 'first_name', 'last_name', 'description', 'status_message', 'profile_image', 'following')
+
+    def get_following(self, obj):
+        return [user.uuid for user in obj.following.all()]
 
 class UserSignupSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -22,4 +27,9 @@ class UserSignupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'nickname', 'first_name', 'last_name', 'description']
+        fields = ['id', 'uuid', 'email', 'password', 'nickname', 'first_name', 'last_name', 'description']
+
+class UserFriendshipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Friendship
+        fields = ('following_user', 'followed_user')
