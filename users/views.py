@@ -1,5 +1,6 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
+from django.utils import timezone
 
 from users.models import User, Friendship
 from users.forms import LoginForm, SignupForm
@@ -167,6 +168,7 @@ def user_withdraw(request):
         Friendship.objects.filter(followed_user=user).update(is_deleted=True)
 
         user.is_deleted = True
+        user.delete_at = timezone.now()
         user.save()
 
         data = {
