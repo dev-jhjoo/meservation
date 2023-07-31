@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from users.models import User, Friendship
+from users.models import User, Friendship, Schedule
 
 class UserSerializer(serializers.ModelSerializer):
     following = serializers.SerializerMethodField()
@@ -33,3 +33,8 @@ class UserFriendshipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friendship
         fields = ('following_user', 'followed_user')
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Schedule
+        fields = ('id', 'uuid', 'start_time', 'end_time', 'description')

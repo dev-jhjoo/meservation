@@ -2,13 +2,15 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.utils import timezone
 
-from users.models import User, Friendship
+from datetime import datetime
+
+from users.models import User, Friendship, Schedule
 from users.forms import LoginForm, SignupForm
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from users.serializers import UserSerializer, UserSignupSerializer, UserFriendshipSerializer
+from users.serializers import UserSerializer, UserSignupSerializer, UserFriendshipSerializer, ScheduleSerializer
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
@@ -326,3 +328,58 @@ def user_unfollow(request):
 
         return create_response(4001, "유저가 존재하지 않습니다.", data, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_schedule(request):
+    user_uuid = request.user.uuid
+
+    schedule = Schedule.objects.filter(uuid=user_uuid, is_deleted=False)
+    serializer = ScheduleSerializer(schedule, many=True)
+
+    data = {
+        "count": len(serializer.data),
+        "schedules": serializer.data
+    }
+
+    return create_response(2000, "Success", data)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_schedule(request):
+    user_uuid = request.user.uuid
+    data = request.data.copy()
+    data['uuid'] = user_uuid
+    serializer = ScheduleSerializer(data=data)
+
+    local_timezone = timezone.get_default_timezone()
+    start_time = timezone.make_aware(datetime.fromisoformat(data.get('start_time', '')), local_timezone)
+    end_time = timezone.make_aware(datetime.fromisoformat(data.get('end_time', '')), local_timezone)
+
+    if not start_time or not end_time:
+        return create_response(4003, "시작 시간과 종료 시간을 모두 입력해주세요.", {}, status=status.HTTP_400_BAD_REQUEST)
+
+    if start_time >= end_time:
+        return create_response(4004, "시작 시간은 종료 시간보다 이전이어야 합니다.", {}, status=status.HTTP_400_BAD_REQUEST)
+
+    now = timezone.now()
+    if start_time < now or end_time < now:
+        return create_response(4005, "과거의 시간에 스케줄을 생성할 수 없습니다.", {}, status=status.HTTP_400_BAD_REQUEST)
+
+    overlap_schedules = Schedule.objects.filter(uuid=user_uuid, start_time__lt=data['end_time'], end_time__gt=data['start_time'])
+    if overlap_schedules.exists():
+        return create_response(4002, "이미 등록된 일정이 있습니다.", {}, status=status.HTTP_400_BAD_REQUEST)
+
+    if serializer.is_valid():
+        serializer.save()
+
+        data = {
+            "count": 1,
+            "schedule": serializer.data
+        }
+        return create_response(2000, "Success", data)
+    
+    messages = {}
+    for key, value in serializer.errors.items():
+        messages[key] = value[0]
+        
+    return create_response (4001, messages, {}, status=status.HTTP_400_BAD_REQUEST)

@@ -104,3 +104,25 @@ class Friendship(models.Model):
 
     def __str__(self):
         return f"{self.following_user} follows {self.followed_user}"
+
+
+class Schedule(models.Model):
+    id = models.AutoField(_("id"), primary_key=True)
+
+    uuid = models.ForeignKey("users.user", on_delete=models.CASCADE, related_name="schedules_uuid", to_field="uuid", db_column="user_uuid")
+    start_time = models.DateTimeField(_("start_time"))
+    end_time = models.DateTimeField(_("end_time"))
+    description = models.TextField(_("description"), blank=True, null=True)
+    
+    is_deleted = models.BooleanField(_("is_deleted"), default=False)
+    deleted_at = models.DateTimeField(_("deleted_at"), null=True, blank=True)
+    create_at = models.DateTimeField(_("create_at"), auto_now_add=True)
+    update_at = models.DateTimeField(_("update_at"), auto_now=True)
+
+    class Meta:
+        db_table = "schedule"
+        verbose_name = _("Schedule")
+        verbose_name_plural = _("Schedules")
+
+    def __str__(self):
+        return f"{self.user.nickname}'s schedule on {self.start_time.strftime('%Y-%m-%d %H:%M')}"
