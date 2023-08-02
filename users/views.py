@@ -153,14 +153,14 @@ def user_signup(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def user_withdraw(request):
-    uuid = request.data.get("uuid")
+    user_uuid = request.user.uuid
 
-    if not uuid:
+    if not user_uuid:
         data = {}
         return create_response(4001, "유저 uuid가 없습니다.", data, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        user = User.objects.get(uuid=uuid)
+        user = User.objects.get(uuid=user_uuid)
 
         if user.is_deleted:
             data = {}
