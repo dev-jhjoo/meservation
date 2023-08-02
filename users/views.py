@@ -168,7 +168,6 @@ def user_withdraw(request):
         
         Friendship.objects.filter(following_user=user).update(is_deleted=True)
         Friendship.objects.filter(followed_user=user).update(is_deleted=True)
-
         Schedule.objects.filter(uuid=user).update(is_deleted=True)
 
         user.is_deleted = True
@@ -387,8 +386,3 @@ def create_schedule(request):
             return create_response(2000, "Success", data)
     except Exception as e:
         return create_response(4001, "잘못된 시간 형식입니다.", {}, status=status.HTTP_400_BAD_REQUEST)
-        # messages = {}
-        # for key, value in serializer.errors.items():
-        #     messages[key] = value[0]
-        
-    # return create_response (4001, messages, {}, status=status.HTTP_400_BAD_REQUEST)
